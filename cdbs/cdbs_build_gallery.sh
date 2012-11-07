@@ -73,14 +73,7 @@ function func_build_tree()
 
 function func_clean_up()
 {
-	for File in buildlist description packages resources html
-	do
-		find ${DirTemp} -iname "*${File}*" -exec rm -rf {} \;
-	done
-
-	for File in ${DirBuild}/* ${DirRules}/* ${DirOutput}/* ${DirLists}/*; do rm -rf ${File}; done
-	for File in ${DirCache}/*; do rm -rf ${File}; done
-	
+	rm -rf ${LocalApt}/*
 	func_build_tree
 }
 

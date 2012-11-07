@@ -18,8 +18,10 @@
 # remove the hashes in the line below to make it quiet
 # # # # # # # # # # # # # # # # # # # # # VERBOSE=OFF
 
+unalias apt-get
+
 # script's paths
-BaseDir=${HOME}/cdbs.mirror/cdbs
+BaseDir=$(pwd)
 LocalApt="${BaseDir}/archive"
 
 # apt's and script dirs
@@ -40,7 +42,7 @@ AptOptions="-o Dir::Etc::SourceList=${LocalApt}/sources.list \
 # sources.list config
 MirrorVersion="unstable"
 MirrorPaths="main contrib non-free"
-MirrorURL="file:${HOME}/cdbs.mirror/debian"
+MirrorURL="file:$(pwd)/../mirror/debian"
 
 # if you want to specify more than just one mirror, use \n
 AptMirror="deb-src ${MirrorURL} ${MirrorVersion} ${MirrorPaths}"
@@ -50,8 +52,8 @@ PackageList=${LocalApt}/packages.list
 
 # official cdbs includes
 IncList=${LocalApt}/includes.list
-svn up build-common && find build-common/1 -type f | grep -v .svn > ${IncList}
-sed -i 's/\.in$//g' ${IncList}
+git clone git://git.debian.org/collab-maint/cdbs.git build-common
+find build-common/1 -type f | grep -v .git | sed 's/\.in$//g' > ${IncList}
 
 function func_logging()
 {
@@ -85,20 +87,24 @@ function func_clean_up()
 function func_update_sources()
 {
 	echo ${AptMirror} > ${LocalApt}/sources.list
-	apt-get -qq -y --force-yes ${AptOptions} update
-
-	grep -B 10 cdbs ${DirLists}/*_source_* | sed '/Package/!d;s/^.*: //g;/\@/d' | sort -n > ${PackageList}
+	apt-get --allow-unauthenticated -qq -y --force-yes ${AptOptions} update
+	grep -B 10 cdbs ${DirLists}/*_source_* | sed '/Package/!d;s/^.*: //g;/\@/d' | grep -v ^$ | sort -n > ${PackageList}
 }
 
 function func_download_sources()
 {
+	if [ ! -s ${PackageList} ]; then
+		func_logging "Package list ${PackageList} is empty, aborting"
+		exit 1
+	fi
+
 	while read Current
 	do
 		cd ${DirCache}
-		func_logging "${Current} ..."
+		func_logging "${Current}..."
 	
-		apt-get -qq -y --force-yes ${AptOptions} update
-		apt-get -qq ${AptOptions} -y --force-yes source ${Current}
+		apt-get --allow-unauthenticated -qq -y --force-yes ${AptOptions} update
+		apt-get --allow-unauthenticated -qq ${AptOptions} -y --force-yes source ${Current}
 	
 	done < ${PackageList}
 }
@@ -197,7 +203,7 @@ function func_template_build()
 
 function func_index_generate()
 {
-	for Letter in a b c d e f g h i j k l m n o p q r s t u v x z w y [0-9]
+	for Letter in {{a..z},{0..9}}
 	do
 		grep "href=\"${Letter}.*$" ${DirTemp}/_packages.html > ${DirTemp}/_${Letter}.packages.html
 
@@ -235,7 +241,7 @@ func_logging '\nProcessing the data files of the following packages:\n'
 
 cd ${DirCache}
 
-for Dir in $(find ./ -maxdepth 1 -type d | grep -v './$\|.svn' | sort)
+for Dir in $(find ./ -maxdepth 1 -type d | grep -v './$\|.git' | sort)
 do
 	SourceDir=$(basename ${Dir})
 	SourceName=$(sed '/^Source:/!d;s/^.*: //' ${SourceDir}/debian/control)

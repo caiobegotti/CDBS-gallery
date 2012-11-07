@@ -12,3 +12,9 @@ History
 r140 | caio1982 | 2006-08-02 19:21:25 -0300 (Wed, 02 Aug 2006) | 1 line
 importing my cdbs-reference project into the subversion repository (already working, partially)
 ```
+
+Pending
+-------
+
+- Reduce the disk I/O (avoid re-unpacking of sources)
+- Rewrite it in Python or some new fancy language

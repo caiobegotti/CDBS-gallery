@@ -1,14 +1,21 @@
 body {
 	color: #000000;
 	font: normal normal normal 100%/100% sans-serif;
-	background: url(logo.png) #FFFFFF 100% 0% no-repeat;
+	background: url(background.png) #FFFFFF 100% 0% no-repeat;
 	margin: 0px;
+}
+
+img {
+	position: absolute;
+	top: 0px;
+	left: 0px;
 }
 
 h1 {
 	color: #FFFFFF;
 	background-color: #B43418;
 	padding: 25px;
+	padding-left: 10%;
 	margin: 0px;
 	border-bottom: 5px solid #8E2913;
 }

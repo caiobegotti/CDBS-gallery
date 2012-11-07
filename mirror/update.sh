@@ -3,7 +3,7 @@
 # cp /usr/share/keyrings/debian-archive-keyring.gpg ~/.gnupg/trustedkeys.gpg
 # gpg --keyring /usr/share/keyrings/debian-archive-keyring.gpg --export \
 # | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-
+# gpg --keyserver hkp://subkeys.pgp.net --recv-keys A040830F7FAC5991
 
 mirror=ftp.br.debian.org
 distribution=sid

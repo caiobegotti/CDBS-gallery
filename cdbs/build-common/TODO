@@ -1,0 +1,24 @@
+* Handle packages which compile themselves several times with
+  different compiler flags.
+
+* Handle packages which build multiple versions with different ./configure
+  flags.
+
+* Come up with a good way to selectively override rules or even portions
+  of rules.
+
+* Have a simple way to put docs like changelogs and such in one package,
+  and symlink them from other packages.
+
+* New regression tests for:
+  - bzip2 tarball builds
+  - disabling make check
+  - gnome
+  - kde
+  - perl
+
+* Fix current test suite so that install rules are tested.
+
+* Support spaces in filenames (hard).
+
+* Take over Debian archive.

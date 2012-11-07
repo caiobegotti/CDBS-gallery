@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+<head>
+	<title>Common Debian Build System Gallery</title>
+	<link rel="stylesheet" title="CDBS stylesheet" href="cdbs.css" type="text/css" media="screen" />
+</head>
+
+<body>
+	
+<h1><a href="index.html" title="Main page">Jump to the main page</a> Online CDBS Gallery</h1>
+
+<div id="bar">
+	<ul>
+		<li><a href="_code.html">[How it Works]</a></li>
+		<li><a href="_faq.html">[Gallery FAQ]</a></li>
+		<li><a href="https://perso.duckcorp.org/duck/cdbs-doc/">[Documentation]</a></li>
+		<li><a href="_contact.html">[Contact Form]</a></li>
+	</ul>
+</div>
+
+<div id="body">
+	<h2>Gallery's FAQ</h2>
+
+	<dl id="faq">
+		<dt class="question">1. What is this CDBS thing anyway?</dt>
+			<dd class="answer">
+			To use their own definition... taken from the <a href="http://build-common.alioth.debian.org/">CDBS official site</a>: 
+			In essence, the Common Debian Build System attempts to provide a modular yet very powerful
+			build system for Debian packages. You can use it to create a build system for typical GNU autotools
+			packages in 4 lines, or you can just reuse the CDBS core to implement your own build systems.
+			</dd>
+
+		<dt class="question">2. Why have you built such gallery with tons of samples?</dt>
+			<dd class="answer">
+			I started getting pissed off by people telling me CDBS is pure black magic (even @debian.org people) and that
+			in fact CDBS doesn't make your package construction cleaner. This gallery is my personal effort to show
+			off the opposite. It can and will make your mantainer life easier (but we're not talking about policies here).
+			</dd>
+
+		<dt class="question">3. How come this script you wrote is sooo slow?</dt>
+			<dd class="answer">
+			Well... do you wanna help me to solve this problem? To be honest, it's not a big problem for me since you can use
+			a local repository (with sources files, of course) and tell the script to use it. This whole process takes
+			about 30 minutes in my computer, which happens to not be a fast machine nowadays.
+			</dd>
+			
+		<dt class="question">4. Shell scripting is disgusting... what about Python or Ruby?</dt>
+			<dd class="answer">
+			I choose to write it in shell script because that was easy and .sh scripts are fast to debug and test, and
+			now I can also pretend I'm a programmer for real (when in real life I'm not). Python probably could be a great
+			choice but I should have to learn how to write stuff for it first, ha! Ruby would be a even nicer idea but as far
+			as I know it only has APT bindings through libept, still under development. By the way, I do know that Python already
+			has stable bindings for APT through libapt-front.
+			<br /><br />
+			Furthermore, this whole gallery and the script written is too simple for such sofisticated solutions.
+			</dd>
+
+		<dt class="question">5. What's the big deal in building packages with debhelper?</dt>
+			<dd class="answer">
+			Short answer: because I think CDBS is still better than debhelper and I like it.
+			<br />
+			Long one: you'll feel how simple CDBS is after touching in and playing with some examples which you can
+			copy to your package's environment and using CDBS you can write a plain "debian/rules" with 10 lines when you'd
+			need about 90 lines if using debhelper plus common packaging hacks. Also, I believe that debhelper is a way
+			for obscurity since its documentations aren't too user-friendly and, because that, may certainly to repel newcomers.
+			<br /><br />
+			Keep in mind that CDBS purpose isn't to drop debhelper, at all. It's done to complement debhelper and many other tools. Also,
+			CDBS may turn into a tricky framework if you don't understand its underlying (so I strongly recommend you to read
+			anything about it first - maybe the documentation link in the menu above?)
+			</dd>
+
+		<dt class="question">6. Meh, nobody really use CDBS today... why would I mind?</dt>
+			<dd class="answer">
+			Take a deep look at the gallery's page before saying such things... you'll realize that's FUD.
+			</dd>
+
+		<dt class="question">7. So, why don't you just create a real CDBS reference guide then?</dt>
+			<dd class="answer">
+			Because I'm not interested on it (yet). There's official documentation for CDBS already (which includes its source
+			code) and despite of what people try to convince you about, that documentation is quite good and the real problem
+			is the lack of good samples and real-world examples on how to use CDBS. Pretty much like "show me the code".
+			</dd>
+
+		<dt class="question">8. I wanna use it, now! I want to port packages to CDBS. Can you help me?</dt>
+			<dd class="answer">
+			Actually I'm as rookie as you are, probably. You can find a nice people and <a href="http://mentors.debian.net">folks wanting 
+			to help on packaging at Debian Mentors</a>. There you can talk about CDBS and how to port source packages to this framework.
+			</dd>
+
+		<dt class="question">9. Could you answer my messages I sent you a few days ago, please?</dt>
+			<dd class="answer">
+			I'm not available 24 hours a days, sorry. I'll try to track every e-mail received ASAP.
+			</dd>
+	</dl>
+
+</div>
+
+</body>
+</html>

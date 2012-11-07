@@ -1,0 +1,200 @@
+# -*- mode: makefile; coding: utf-8 -*-
+# Copyright © 2003 Colin Walters <walters@debian.org>
+# Copyright © 2006 Marc Dequènes (Duck) <Duck@DuckCorp.org>
+# Copyright © 2003,2006-2009 Jonas Smedegaard <dr@jones.dk>
+# Description: manage Python modules using the 'distutils' build system
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2, or (at
+# your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02111-1307 USA.
+#
+
+#PATH_RULES#
+
+ifndef _cdbs_class_python_distutils
+_cdbs_class_python_distutils = 1
+
+include $(_cdbs_rules_path)/buildcore.mk$(_cdbs_makefile_suffix)
+include $(_cdbs_class_path)/langcore.mk$(_cdbs_makefile_suffix)
+
+
+# default package is the first one declared in 'debian/control'
+# NB! override needs to be done _before_ including this file!
+#DEB_PYTHON_MODULE_PACKAGES =
+DEB_PYTHON_PRIVATE_MODULES_DIRS =
+
+# common variables
+DEB_PYTHON_SETUP_CMD = setup.py
+DEB_PYTHON_CLEAN_ARGS = -a
+DEB_PYTHON_BUILD_ARGS = --build-base="$(CURDIR)/$(DEB_BUILDDIR)/build"
+DEB_PYTHON_INSTALL_ARGS_ALL = --no-compile -O0
+
+#DEB_PYTHON_DESTDIR = $(DEB_DESTDIR)
+
+cdbs_python_destdir = $(or $(DEB_PYTHON_DESTDIR),$(DEB_DESTDIR))
+cdbs_python_packages = $(or $(DEB_PYTHON_MODULE_PACKAGES),$(firstword $(filter-out %-doc %-dev %-common, $(DEB_PACKAGES))))
+cdbs_python_arch_packages = $(filter $(cdbs_python_packages), $(DEB_ARCH_PACKAGES))
+cdbs_python_indep_packages = $(filter $(cdbs_python_packages), $(DEB_INDEP_PACKAGES))
+
+# DEB_PYTHON_MODULE_PACKAGE is deprecated.
+# use DEB_PYTHON_MODULE_PACKAGES instead (since CDBS 0.4.54)
+# (warn even when used as-is: plural form breaks use in build targets)
+DEB_PYTHON_MODULE_PACKAGE = $(warning Use of DEB_PYTHON_MODULE_PACKAGE is deprecated, please use DEB_PYTHON_MODULE_PACKAGES instead)$(firstword $(filter-out %-doc %-dev %-common, $(DEB_PACKAGES)))
+
+# check python system
+cdbs_use_xs_field := $(shell grep -q "^XS-Python-Version:" debian/control && echo yes)
+cdbs_selected_pycompat := $(shell if [ -e debian/pycompat ]; then cat debian/pycompat; fi)
+cdbs_pycompat = $(cdbs_selected_pycompat)
+ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
+  ifeq (, $(cdbs_selected_pycompat))
+    cdbs_pycompat = 2
+  endif # use pycompat
+  # warning pysupport compatibility mode
+  ifneq (, $(cdbs_use_xs_field))
+    $(warning WARNING:  Use of XS-Python-Version and XB-Python-Version fields in debian/control is deprecated with pysupport method; use debian/pyversions if you need to specify specific versions.)
+  endif # use XS field (compat)
+else
+  ifeq (pycentral, $(DEB_PYTHON_SYSTEM))
+    ifeq (, $(cdbs_selected_pycompat))
+      cdbs_pycompat = 2
+    endif # use pycompat
+  else
+    $(error unsupported Python system: $(DEB_PYTHON_SYSTEM) (select either pysupport or pycentral))
+  endif # pycentral
+endif # pysupport
+
+
+# Calculate cdbs_python_build_versions
+cdbs_python_current_version := $(shell pyversions -vd)
+ifeq (,$(cdbs_python_arch_packages))
+  # check if current is in build versions
+  ifneq ($(cdbs_python_current_version), $(filter $(cdbs_python_current_version), $(shell pyversions -vr)))
+    cdbs_python_compile_version := $(firstword $(strip $(sort $(shell pyversions -vr))))
+    cdbs_python_build_versions := $(cdbs_python_compile_version)
+  else
+    cdbs_python_build_versions := $(cdbs_python_current_version)
+  endif
+else
+cdbs_python_build_versions := $(shell pyversions -vr)
+endif # archall
+
+# check if build is possible
+ifeq (, $(cdbs_python_build_versions))
+ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
+$(error invalid setting in debian/pyversions)
+else
+$(error invalid setting for XS-Python-Version)
+endif # system selected
+endif # build versions empty
+
+
+# Dependencies according to Python policy, appendix A
+ifeq (,$(cdbs_python_arch_packages))
+  ifneq (, $(cdbs_python_compile_version))
+    CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), python$(cdbs_python_compile_version)-dev, python (>= 2.3.5-7)
+  else
+    CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), python-dev (>= 2.3.5-7)
+  endif
+else
+CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), python-all-dev
+endif
+ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
+CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), python-support
+else
+CDBS_BUILD_DEPENDS := $(CDBS_BUILD_DEPENDS), python-central
+endif
+
+
+cdbs_python_current_binary := $(shell pyversions -d)
+cdbs_python_binary = $(if $(call cdbs_streq,$(cdbs_python_current_binary),$(1)),python,$(1))
+
+pre-build::
+	mkdir -p debian/python-module-stampdir
+
+# build stage
+common-build-arch common-build-indep:: $(addprefix python-build-stamp-, $(cdbs_python_build_versions))
+
+$(patsubst %,build/%,$(cdbs_python_indep_packages) $(cdbs_python_arch_packages)) :: build/% : debian/python-module-stampdir/%
+
+$(patsubst %,debian/python-module-stampdir/%,$(cdbs_python_indep_packages)) :: debian/python-module-stampdir/%:
+	cd $(DEB_SRCDIR) && $(call cdbs_python_binary,python$(cdbs_python_compile_version)) $(DEB_PYTHON_SETUP_CMD) build $(DEB_PYTHON_BUILD_ARGS)
+	touch $@
+
+$(patsubst %,debian/python-module-stampdir/%,$(cdbs_python_arch_packages)) :: debian/python-module-stampdir/%:
+	set -e; for buildver in $(cdbs_python_build_versions); do \
+		cd $(CURDIR) && cd $(DEB_SRCDIR) && $(call cdbs_python_binary,python$$buildver) $(DEB_PYTHON_SETUP_CMD) build $(DEB_PYTHON_BUILD_ARGS); \
+	done
+	touch $@
+
+
+# install stage
+$(patsubst %,install/%,$(cdbs_python_indep_packages)) :: install/%: python-install-py
+	cd $(DEB_SRCDIR) && $(call cdbs_python_binary,python$(cdbs_python_compile_version)) $(DEB_PYTHON_SETUP_CMD) install --root=$(cdbs_python_destdir) $(DEB_PYTHON_INSTALL_ARGS_ALL)
+
+$(patsubst %,install/%,$(cdbs_python_arch_packages)) :: install/%: $(addprefix python-install-, $(cdbs_python_build_versions))
+	set -e; for buildver in $(cdbs_python_build_versions); do \
+		cd $(CURDIR) && cd $(DEB_SRCDIR) && $(call cdbs_python_binary,python$$buildver) $(DEB_PYTHON_SETUP_CMD) install --root=$(cdbs_python_destdir) $(DEB_PYTHON_INSTALL_ARGS_ALL); \
+	done
+
+# Deprecated targets.  You should use above targets instead.
+$(addprefix python-build-stamp-, $(cdbs_python_build_versions)):
+python-install-py $(addprefix python-install-, $(cdbs_python_build_versions)):
+
+
+
+# This class can optionally use debhelper's commands.
+# (if unused, below build targets should simply be ignored)
+
+DEB_DH_PYTHON_ARGS = $(DEB_DH_PYTHON_ARGS_ALL) $(DEB_DH_PYTHON_ARGS_$(cdbs_curpkg)) $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
+
+$(patsubst %,binary-install/%,$(DEB_PACKAGES)) :: binary-install/%: binary-install-python/%
+$(patsubst %,binary-install-python/%,$(DEB_PACKAGES)) :: binary-install-python/%:
+ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
+	dh_pysupport -p$(cdbs_curpkg) $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
+else
+	dh_pycentral -p$(cdbs_curpkg)
+endif
+
+
+# clean stage
+clean:: $(patsubst %,python-module-clean/%,$(cdbs_python_indep_packages) $(cdbs_python_arch_packages)) $(addprefix python-clean-, $(cdbs_python_build_versions))
+
+$(patsubst %,python-module-clean/%,$(cdbs_python_indep_packages)) :: python-module-clean/%:
+	-cd $(DEB_SRCDIR) && $(call cdbs_python_binary,python$(cdbs_python_compile_version)) $(DEB_PYTHON_SETUP_CMD) clean $(DEB_PYTHON_CLEAN_ARGS)
+
+$(patsubst %,python-module-clean/%,$(cdbs_python_arch_packages)) :: python-module-clean/%:
+	-for buildver in $(cdbs_python_build_versions); do \
+		cd $(CURDIR) && cd $(DEB_SRCDIR) && $(call cdbs_python_binary,python$$buildver) $(DEB_PYTHON_SETUP_CMD) clean $(DEB_PYTHON_CLEAN_ARGS); \
+	done
+
+# Deprecated targets.  You should use above targets instead.
+$(addprefix python-clean-, $(cdbs_python_build_versions)):
+
+# cleanup stamp dir
+# (dh_clean choke on dirs named stamp, so need to happen before clean::)
+clean:: clean-python-distutils
+clean-python-distutils::
+ifeq (, $(cdbs_selected_pycompat))
+	echo "$(cdbs_pycompat)" >debian/pycompat
+endif # use pycompat
+	rm -rf debian/python-module-stampdir
+
+# Calling setup.py clean may create .pyc files, so we need a final cleanup
+# pass here.
+clean::
+	find . -name '*.pyc' -exec rm '{}' ';'
+
+.PHONY: $(patsubst %,debian/python-module-stampdir/%,$(cdbs_python_indep_packages) $(cdbs_python_arch_packages))
+.PHONY: $(patsubst %,python-module-clean/%,$(cdbs_python_indep_packages) $(cdbs_python_arch_packages))
+endif

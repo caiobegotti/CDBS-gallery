@@ -50,11 +50,6 @@ AptMirror="deb-src ${MirrorURL} ${MirrorVersion} ${MirrorPaths}"
 # packages to parse and work out
 PackageList=${LocalApt}/packages.list
 
-# official cdbs includes
-IncList=${LocalApt}/includes.list
-git clone git://git.debian.org/collab-maint/cdbs.git build-common
-find build-common/1 -type f | grep -v .git | sed 's/\.in$//g' > ${IncList}
-
 function func_logging()
 {
 	if [ ! "${VERBOSE}" == "OFF" ]
@@ -223,6 +218,15 @@ clear
 
 func_logging 'Erasing all the data fetched, processed and temp files. \nThis may take some time, so please be patient.\n'
 func_clean_up
+
+# official cdbs includes
+IncList=${LocalApt}/includes.list
+rm -rf build-common && git clone git://git.debian.org/collab-maint/cdbs.git build-common
+find build-common/1 -type f | grep -v .git | sed 's/\.in$//g' > ${IncList}
+if [ ! -e ${IncList} ]; then
+	func_logging "CDBS includes list ${IncList} not present, aborting"
+	exit 1
+fi
 
 func_logging "Updating APT sources (${LocalApt}/sources.list)."
 func_update_sources

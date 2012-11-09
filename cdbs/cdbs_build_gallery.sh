@@ -191,7 +191,7 @@ function func_template_build()
 
 function func_index_generate()
 {
-	for Letter in {{a..z},{0..9}}
+	for Letter in {{a..z},[0-9]}
 	do
 		grep "href=\"${Letter}.*$" ${DirTemp}/_packages.html > ${DirTemp}/_${Letter}.packages.html
 

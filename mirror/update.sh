@@ -1,4 +1,4 @@
-#!/bin/bash -xev
+#!/bin/bash -e
 
 mirror=ftp.br.debian.org
 distributions=jessie
@@ -29,7 +29,7 @@ function update_mirror() {
 }
 
 # regular mirror
-#update_mirror ${mirror} ${distributions} ${archs} ${sections} ${target}
+update_mirror ${mirror} ${distributions} ${archs} ${sections} ${target}
 
 # just "non-official" packages now and their binaries
 distributions=jessie-updates,jessie-backports
